@@ -1,0 +1,10 @@
+name: TestPlugin
+version: "${project.version}"
+main: org.leedavis.testplugin.TestPlugin
+api-version: "1.21"
+
+commands:
+  croptraits:
+    description: Get the traits of a crop at a specific location
+    usage: /croptraits [<x> <y> <z>]
+    permission: testplugin.croptraits

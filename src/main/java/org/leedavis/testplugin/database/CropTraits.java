@@ -55,7 +55,7 @@ public class CropTraits {
         }
     }
 
-    public CropData getCropTraits(String world, int x, int y, int z) throws SQLException {
+    public CropData getCropTraits(String world, int x, int y, int z) {
         String sql = "SELECT quality, resistance, yield FROM wheat_traits WHERE world = ? AND x = ? AND y = ? AND z = ?";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -71,9 +71,14 @@ public class CropTraits {
                             resultSet.getInt("resistance"),
                             resultSet.getInt("yield"));
                 } else {
-                    return null; // No crop found at this location
+                    return new CropData(0, 0, 0);
                 }
             }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            System.out.println("Failed to get crop traits for location: " +
+                    world + " " + x + "," + y + "," + z);
+            return null;
         }
     }
 

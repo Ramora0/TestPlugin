@@ -1,0 +1,8 @@
+# TestPlugin Configuration
+# Temperature and humidity values range from -1 to 1
+# -1 = very cold/dry, 0 = moderate, 1 = very hot/humid
+
+crops:
+  wheat:
+    optimal_temperature: 0.6
+    optimal_humidity: 0.6

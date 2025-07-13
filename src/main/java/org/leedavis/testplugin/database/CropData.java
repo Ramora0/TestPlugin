@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -83,6 +84,17 @@ public class CropData {
     }
   }
 
+  public double getCancelChance(Block block, double targetHumidity, double targetTemperature) {
+    double humidity = block.getHumidity() - targetHumidity;
+    double temperature = block.getTemperature() - targetTemperature;
+
+    double rFactor = Math.pow(resistance - 5, 2) / 5.;
+    double hFactor = Math.exp(-Math.pow(humidity, 2) * rFactor);
+    double tFactor = Math.exp(-Math.pow(temperature, 2) * rFactor);
+
+    return 1 - hFactor * tFactor;
+  }
+
   // ========================================
   // ITEM STACK GENERATION METHODS
   // ========================================
@@ -135,7 +147,7 @@ public class CropData {
     } else if (quality <= -2) {
       return ChatColor.YELLOW + "Below Average (" + quality + ")"; // Yellow
     } else if (quality <= 2) {
-      return "Average (" + quality + ")"; // White
+      return ChatColor.WHITE + "Average (" + quality + ")"; // White
     } else if (quality <= 4) {
       return ChatColor.GREEN + "Good (" + quality + ")"; // Green
     } else if (quality <= 7) {
@@ -161,6 +173,17 @@ public class CropData {
     int yield = nbt.getOrDefault(new NamespacedKey("testplugin", "yield"), PersistentDataType.INTEGER, 0);
 
     return new CropData(quality, resistance, yield);
+  }
+
+  public static boolean hasNBT(ItemStack item) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return false;
+
+    PersistentDataContainer nbt = meta.getPersistentDataContainer();
+    return nbt.has(new NamespacedKey("testplugin", "quality"), PersistentDataType.INTEGER) &&
+        nbt.has(new NamespacedKey("testplugin", "resistance"), PersistentDataType.INTEGER) &&
+        nbt.has(new NamespacedKey("testplugin", "yield"), PersistentDataType.INTEGER);
   }
 
   // ========================================

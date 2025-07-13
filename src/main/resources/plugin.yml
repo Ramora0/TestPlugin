@@ -8,3 +8,7 @@ commands:
     description: Get the traits of a crop at a specific location
     usage: /croptraits [<x> <y> <z>]
     permission: testplugin.croptraits
+  environment:
+    description: Get the humidity and temperature at your current location
+    usage: /environment
+    permission: testplugin.environment

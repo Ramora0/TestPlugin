@@ -36,7 +36,7 @@ public class CropEventHandler implements Listener {
 
   @EventHandler
   public void onEntityPickupItem(EntityPickupItemEvent event) {
-    // Only handle player pickups
+    // TODO: Also when put into inventory from chest
     if (!(event.getEntity() instanceof Player)) {
       return;
     }
@@ -89,6 +89,7 @@ public class CropEventHandler implements Listener {
       try {
         ItemStack placedItem = event.getItemInHand();
         CropNBT cropData = AttributeManager.getData(placedItem, CropNBT.class);
+        System.out.println("Placing crop with data: " + (cropData != null ? cropData.toString() : "No data"));
 
         cropTraits.createCrop(
             block.getWorld().getName(),
@@ -106,21 +107,15 @@ public class CropEventHandler implements Listener {
 
   @EventHandler
   public void onBlockBreak(BlockBreakEvent event) {
-    // Breaking block under?
-    long startTime = System.nanoTime();
     Block block = event.getBlock();
 
     if (block.getType() == Material.WHEAT) {
       // Get crop traits before destroying it
-      long dbReadStart = System.nanoTime();
       CropNBT cropData = cropTraits.getCropTraits(
           block.getWorld().getName(),
           block.getX(),
           block.getY(),
           block.getZ());
-      long dbReadEnd = System.nanoTime();
-      double dbReadMs = (dbReadEnd - dbReadStart) / 1_000_000.0;
-      System.out.println("  DB read took: " + String.format("%.3f", dbReadMs) + " ms");
 
       if (cropData == null) {
         System.out.println("Uhhhh no crop data for location: " +
@@ -129,38 +124,49 @@ public class CropEventHandler implements Listener {
       }
 
       try {
-        long dbDeleteStart = System.nanoTime();
         cropTraits.deleteCrop(
             block.getWorld().getName(),
             block.getX(),
             block.getY(),
             block.getZ());
-        long dbDeleteEnd = System.nanoTime();
-        double dbDeleteMs = (dbDeleteEnd - dbDeleteStart) / 1_000_000.0;
-        System.out.println("  DB delete took: " + String.format("%.3f", dbDeleteMs) + " ms");
 
         Ageable age = (Ageable) block.getBlockData();
 
-        ItemStack drop = age.getAge() == age.getMaximumAge() ? cropData.getCrop() : cropData.getSeeds();
+        ItemStack itemInHand = event.getPlayer().getInventory().getItemInMainHand();
+        int hoeLevel = getHoeLevel(itemInHand.getType());
 
-        // TODO: Broken with a hoe increases stats
+        ItemStack drop;
+        if (age.getAge() == age.getMaximumAge()) {
+          drop = cropData.getCropWithHoe(hoeLevel);
+        } else {
+          drop = cropData.getSeeds();
+        }
 
-        long dropStart = System.nanoTime();
         block.setType(Material.AIR);
         block.getWorld().dropItemNaturally(block.getLocation(), drop);
-        long dropEnd = System.nanoTime();
-        double dropMs = (dropEnd - dropStart) / 1_000_000.0;
-        System.out.println("  Block removal & item drop took: " + String.format("%.3f", dropMs) + " ms");
       } catch (SQLException ex) {
         ex.printStackTrace();
         System.out.println("Failed to handle crop destruction for location: " +
             block.getWorld().getName() + " " + block.getX() + "," + block.getY() + "," + block.getZ());
       }
     }
+  }
 
-    long endTime = System.nanoTime();
-    double durationMs = (endTime - startTime) / 1_000_000.0;
-    System.out.println("BlockBreak event took: " + String.format("%.3f", durationMs) + " ms");
+  private int getHoeLevel(Material material) {
+    switch (material) {
+      case WOODEN_HOE:
+      case STONE_HOE:
+        return 1;
+      case IRON_HOE:
+      case GOLDEN_HOE:
+        return 2;
+      case DIAMOND_HOE:
+        return 3;
+      case NETHERITE_HOE:
+        return 4;
+      default:
+        return 0; // Not a hoe
+    }
   }
 
   @EventHandler

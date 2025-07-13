@@ -84,6 +84,26 @@ public class CropTraits {
         }
     }
 
+    public boolean hasCrop(String world, int x, int y, int z) {
+        String sql = "SELECT COUNT(*) FROM wheat_traits WHERE world = ? AND x = ? AND y = ? AND z = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, world);
+            statement.setInt(2, x);
+            statement.setInt(3, y);
+            statement.setInt(4, z);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            System.out.println("Failed to check crop existence for location: " +
+                    world + " " + x + "," + y + "," + z);
+        }
+        return false;
+    }
+
     public void deleteCrop(String world, int x, int y, int z) throws SQLException {
         String sql = "DELETE FROM wheat_traits WHERE world = ? AND x = ? AND y = ? AND z = ?";
 

@@ -67,6 +67,16 @@ public abstract class AttributeData {
         }
     }
 
+    /**
+     * Override this method in subclasses to provide additional lore lines
+     * that will be displayed at the beginning of the item's lore.
+     * 
+     * @return a list of additional lore lines to display, or empty list if none
+     */
+    protected List<String> getAdditionalLore() {
+        return new ArrayList<>();
+    }
+
     public ItemStack imbueToItem(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null)
@@ -74,6 +84,9 @@ public abstract class AttributeData {
 
         PersistentDataContainer nbt = meta.getPersistentDataContainer();
         List<String> lore = new ArrayList<>();
+
+        // Add any additional lore from subclasses first
+        lore.addAll(getAdditionalLore());
 
         for (Field field : getAllFields()) {
             if (field.isAnnotationPresent(Attribute.class)) {
@@ -86,11 +99,7 @@ public abstract class AttributeData {
                     nbt.set(key, PersistentDataType.INTEGER, value);
 
                     if (attr.includeInLore()) {
-                        if (field.getName().equals("quality")) {
-                            lore.add(QualityNBT.getQualityDisplay(value));
-                        } else {
-                            lore.add(field.getName() + ": " + value);
-                        }
+                        lore.add(field.getName() + ": " + value);
                     }
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
@@ -101,5 +110,33 @@ public abstract class AttributeData {
         meta.setLore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * Creates a copy of this AttributeData instance with all attribute values
+     * copied.
+     * 
+     * @return a new instance of the same type with copied attribute values
+     * @throws RuntimeException if the copy operation fails
+     */
+    public <T extends AttributeData> T copy() {
+        try {
+            // Create a new instance of the same type
+            @SuppressWarnings("unchecked")
+            T copy = (T) this.getClass().getDeclaredConstructor().newInstance();
+
+            // Copy all attribute values
+            for (Field field : getAllFields()) {
+                if (field.isAnnotationPresent(Attribute.class)) {
+                    field.setAccessible(true);
+                    Object value = field.get(this);
+                    field.set(copy, value);
+                }
+            }
+
+            return copy;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to copy AttributeData instance", e);
+        }
     }
 }

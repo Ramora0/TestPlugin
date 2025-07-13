@@ -65,14 +65,19 @@ public final class TestPlugin extends JavaPlugin {
                     int y = Integer.parseInt(args[1]);
                     int z = Integer.parseInt(args[2]);
 
-                    CropNBT cropData = cropTraits.getCropTraits(
-                            player.getWorld().getName(), x, y, z);
+                    // First check if crop data exists at this location
+                    if (cropTraits.hasCrop(player.getWorld().getName(), x, y, z)) {
+                        CropNBT cropData = cropTraits.getCropTraits(
+                                player.getWorld().getName(), x, y, z);
 
-                    if (cropData != null) {
-                        player.sendMessage("Crop traits at " + x + "," + y + "," + z + ":");
-                        player.sendMessage(cropData.toString());
+                        if (cropData != null) {
+                            player.sendMessage("Crop traits at " + x + "," + y + "," + z + ":");
+                            player.sendMessage(cropData.toString());
+                        } else {
+                            player.sendMessage("Error retrieving crop data at location " + x + "," + y + "," + z);
+                        }
                     } else {
-                        player.sendMessage("No crop found at location " + x + "," + y + "," + z);
+                        player.sendMessage("No crop traits found at location " + x + "," + y + "," + z);
                     }
                 } catch (NumberFormatException e) {
                     player.sendMessage("Invalid coordinates! Use: /croptraits <x> <y> <z>");

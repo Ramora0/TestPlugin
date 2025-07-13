@@ -6,10 +6,10 @@ import org.bukkit.inventory.ItemStack;
 
 public class CropNBT extends QualityNBT {
 
-    @Attribute(key = "resistance", displayName = "Resistance")
+    @Attribute
     private int resistance;
 
-    @Attribute(key = "yield", displayName = "Yield")
+    @Attribute
     private int yield;
 
     private static final double NO_CHANGE_PROBABILITY = 0.;
@@ -98,8 +98,32 @@ public class CropNBT extends QualityNBT {
         return 1 - hFactor * tFactor;
     }
 
-    public ItemStack getCrop() {
-        double adjYield = Math.pow(2.5, yield / 5.0 + 1) / 2;
+    public ItemStack getSeeds() {
+        CropNBT copy = copy();
+        copy.setExtra_quality(0);
+
+        return copy.imbueToItem(new ItemStack(Material.WHEAT_SEEDS, 1));
+    }
+
+    public ItemStack getCropWithHoe(int hoeLevel) {
+        int extraYield = 0;
+        if (hoeLevel == 1) {
+            extraYield++;
+            extra_quality--;
+        } else if (hoeLevel == 2) {
+            extraYield += 2;
+            extra_quality -= 1;
+        } else if (hoeLevel == 3) {
+            extraYield += 2;
+            extra_quality += 0;
+        } else if (hoeLevel == 4) {
+            extraYield += 2;
+            extra_quality += 1;
+        } else if (hoeLevel != 0) {
+            System.out.println("Invalid hoe level: " + hoeLevel);
+        }
+
+        double adjYield = Math.pow(2.5, (yield + extraYield) / 5.0 + 1) / 2;
         int amount = 0;
         while (adjYield > 0) {
             if (adjYield > 1) {
@@ -113,8 +137,8 @@ public class CropNBT extends QualityNBT {
         return imbueToItem(new ItemStack(Material.WHEAT, amount));
     }
 
-    public ItemStack getSeeds() {
-        return imbueToItem(new ItemStack(Material.WHEAT_SEEDS, 1));
+    public ItemStack getCrop() {
+        return getCropWithHoe(0);
     }
 
     @Override

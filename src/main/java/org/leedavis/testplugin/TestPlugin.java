@@ -7,8 +7,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.leedavis.testplugin.database.CropData;
 import org.leedavis.testplugin.database.CropTraits;
+import org.leedavis.testplugin.utils.CropNBT;
 
 public final class TestPlugin extends JavaPlugin {
 
@@ -65,7 +65,7 @@ public final class TestPlugin extends JavaPlugin {
                     int y = Integer.parseInt(args[1]);
                     int z = Integer.parseInt(args[2]);
 
-                    CropData cropData = cropTraits.getCropTraits(
+                    CropNBT cropData = cropTraits.getCropTraits(
                             player.getWorld().getName(), x, y, z);
 
                     if (cropData != null) {

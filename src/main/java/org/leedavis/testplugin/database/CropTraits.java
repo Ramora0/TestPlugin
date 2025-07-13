@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.leedavis.testplugin.utils.CropNBT;
+
 public class CropTraits {
     // ========================================
     // FIELDS
@@ -39,7 +41,7 @@ public class CropTraits {
     // CRUD OPERATIONS
     // ========================================
 
-    public void createCrop(String world, int x, int y, int z, CropData cropData) throws SQLException {
+    public void createCrop(String world, int x, int y, int z, CropNBT cropData) throws SQLException {
         String sql = "INSERT OR REPLACE INTO wheat_traits (world, x, y, z, quality, resistance, yield) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -55,7 +57,7 @@ public class CropTraits {
         }
     }
 
-    public CropData getCropTraits(String world, int x, int y, int z) {
+    public CropNBT getCropTraits(String world, int x, int y, int z) {
         String sql = "SELECT quality, resistance, yield FROM wheat_traits WHERE world = ? AND x = ? AND y = ? AND z = ?";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -66,12 +68,12 @@ public class CropTraits {
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return new CropData(
+                    return new CropNBT(
                             resultSet.getInt("quality"),
                             resultSet.getInt("resistance"),
                             resultSet.getInt("yield"));
                 } else {
-                    return new CropData(0, 0, 0);
+                    return new CropNBT(0, 0, 0);
                 }
             }
         } catch (SQLException ex) {

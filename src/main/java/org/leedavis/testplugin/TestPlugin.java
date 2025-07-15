@@ -7,8 +7,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.leedavis.testplugin.database.CropTraits;
-import org.leedavis.testplugin.utils.CropNBT;
+import org.leedavis.testplugin.CropTraits.CropEventHandler;
+import org.leedavis.testplugin.CropTraits.database.CropTraits;
+import org.leedavis.testplugin.CropTraits.utils.CropNBT;
 
 public final class TestPlugin extends JavaPlugin {
 

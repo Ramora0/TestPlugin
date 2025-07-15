@@ -1,4 +1,4 @@
-package org.leedavis.testplugin.database;
+package org.leedavis.testplugin.CropTraits.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.leedavis.testplugin.utils.CropNBT;
+import org.leedavis.testplugin.CropTraits.utils.CropNBT;
 
 public class CropTraits {
     // ========================================

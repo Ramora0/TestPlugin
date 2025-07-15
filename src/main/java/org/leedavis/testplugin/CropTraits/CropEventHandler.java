@@ -1,4 +1,4 @@
-package org.leedavis.testplugin;
+package org.leedavis.testplugin.CropTraits;
 
 import java.sql.SQLException;
 
@@ -17,9 +17,10 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.leedavis.testplugin.database.CropTraits;
+import org.leedavis.testplugin.TestPlugin;
+import org.leedavis.testplugin.CropTraits.database.CropTraits;
+import org.leedavis.testplugin.CropTraits.utils.CropNBT;
 import org.leedavis.testplugin.utils.AttributeManager;
-import org.leedavis.testplugin.utils.CropNBT;
 import org.leedavis.testplugin.utils.QualityNBT;
 
 import net.md_5.bungee.api.ChatColor;
@@ -124,25 +125,34 @@ public class CropEventHandler implements Listener {
       }
 
       try {
-        cropTraits.deleteCrop(
-            block.getWorld().getName(),
-            block.getX(),
-            block.getY(),
-            block.getZ());
-
         Ageable age = (Ageable) block.getBlockData();
 
         ItemStack itemInHand = event.getPlayer().getInventory().getItemInMainHand();
         int hoeLevel = getHoeLevel(itemInHand.getType());
+        boolean isShifting = event.getPlayer().isSneaking();
 
         ItemStack drop;
         if (age.getAge() == age.getMaximumAge()) {
-          drop = cropData.getCropWithHoe(hoeLevel);
+          drop = cropData.getCrop(hoeLevel, isShifting, true);
         } else {
           drop = cropData.getSeeds();
         }
 
-        block.setType(Material.AIR);
+        if (isShifting && age.getAge() == age.getMaximumAge()) {
+          Ageable newCrop = (Ageable) block.getBlockData();
+          newCrop.setAge(1);
+          block.setBlockData(newCrop);
+
+          event.setCancelled(true);
+        } else {
+          block.setType(Material.AIR);
+          cropTraits.deleteCrop(
+              block.getWorld().getName(),
+              block.getX(),
+              block.getY(),
+              block.getZ());
+        }
+
         block.getWorld().dropItemNaturally(block.getLocation(), drop);
       } catch (SQLException ex) {
         ex.printStackTrace();
@@ -171,8 +181,8 @@ public class CropEventHandler implements Listener {
 
   @EventHandler
   public void onPlayerInteract(PlayerInteractEvent event) {
-    // TODO: Right clicking harvesting with hoe keeps some growth stages
-    // Check if the player right-clicked (either air or block)
+    // TODO: Right clicking harvesting with hoe keeps some growth stages / better
+    // quality
     if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
       return;
     }
@@ -228,9 +238,6 @@ public class CropEventHandler implements Listener {
       double cancelChance = data.getCancelChance(block, targetHumidity, targetTemperature);
 
       if (Math.random() < cancelChance) {
-        System.out.println("Blocked growth for wheat at " +
-            block.getWorld().getName() + " " + block.getX() + "," + block.getY() + "," +
-            block.getZ());
         event.setCancelled(true);
       }
     }

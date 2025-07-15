@@ -1,8 +1,10 @@
-package org.leedavis.testplugin.utils;
+package org.leedavis.testplugin.CropTraits.utils;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
+import org.leedavis.testplugin.utils.Attribute;
+import org.leedavis.testplugin.utils.QualityNBT;
 
 public class CropNBT extends QualityNBT {
 
@@ -90,12 +92,14 @@ public class CropNBT extends QualityNBT {
     public double getCancelChance(Block block, double targetHumidity, double targetTemperature) {
         double humidity = block.getHumidity() - targetHumidity;
         double temperature = block.getTemperature() - targetTemperature;
+        double dark = 15 - block.getLightFromSky();
 
         double rFactor = Math.pow(resistance - 5, 2) / 5.;
         double hFactor = Math.exp(-Math.pow(humidity, 2) * rFactor);
         double tFactor = Math.exp(-Math.pow(temperature, 2) * rFactor);
+        double lFactor = Math.exp(-Math.pow(dark / 2, 2) * (rFactor + 0.2));
 
-        return 1 - hFactor * tFactor;
+        return 1 - hFactor * tFactor * lFactor;
     }
 
     public ItemStack getSeeds() {
@@ -105,25 +109,47 @@ public class CropNBT extends QualityNBT {
         return copy.imbueToItem(new ItemStack(Material.WHEAT_SEEDS, 1));
     }
 
-    public ItemStack getCropWithHoe(int hoeLevel) {
+    public ItemStack getCrop(int hoeLevel, boolean isShifting, boolean leftClick) {
         int extraYield = 0;
-        if (hoeLevel == 1) {
-            extraYield++;
-            extra_quality--;
-        } else if (hoeLevel == 2) {
-            extraYield += 2;
-            extra_quality -= 1;
-        } else if (hoeLevel == 3) {
-            extraYield += 2;
-            extra_quality += 0;
-        } else if (hoeLevel == 4) {
-            extraYield += 2;
-            extra_quality += 1;
-        } else if (hoeLevel != 0) {
-            System.out.println("Invalid hoe level: " + hoeLevel);
+        if (leftClick) {
+            if (hoeLevel == 1) {
+                extraYield++;
+                extra_quality--;
+            } else if (hoeLevel == 2) {
+                extraYield += 2;
+                extra_quality -= 1;
+            } else if (hoeLevel == 3) {
+                extraYield += 2;
+                extra_quality += 0;
+            } else if (hoeLevel == 4) {
+                extraYield += 2;
+                extra_quality += 1;
+            } else if (hoeLevel != 0) {
+                System.out.println("Invalid hoe level: " + hoeLevel);
+            }
+        } else {
+            if (hoeLevel == 1) {
+                extraYield--;
+                extra_quality++;
+            } else if (hoeLevel == 2) {
+                extraYield--;
+                extra_quality += 2;
+            } else if (hoeLevel == 3) {
+                extraYield -= 0;
+                extra_quality += 2;
+            } else if (hoeLevel == 4) {
+                extraYield += 1;
+                extra_quality += 2;
+            } else if (hoeLevel != 0) {
+                System.out.println("Invalid hoe level: " + hoeLevel);
+            }
+
+            if (isShifting && hoeLevel > 0) {
+                extraYield -= 3;
+            }
         }
 
-        double adjYield = Math.pow(2.5, (yield + extraYield) / 5.0 + 1) / 2;
+        double adjYield = Math.pow(2, (yield + extraYield) / 5.0 + 1) / 2;
         int amount = 0;
         while (adjYield > 0) {
             if (adjYield > 1) {
@@ -134,11 +160,15 @@ public class CropNBT extends QualityNBT {
             adjYield -= 1.0;
         }
 
-        return imbueToItem(new ItemStack(Material.WHEAT, amount));
+        if (hoeLevel > 0 && isShifting && leftClick) {
+            amount--;
+        }
+
+        return imbueToItem(new ItemStack(Material.WHEAT, Math.max(amount, 0)));
     }
 
     public ItemStack getCrop() {
-        return getCropWithHoe(0);
+        return getCrop(0, false, false);
     }
 
     @Override
